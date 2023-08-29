@@ -1,0 +1,14 @@
+{
+  "database": {
+    "host": "",
+    "port": "",
+    "dbName": "",
+    "dbPassword": "",
+    "sslMode": ""
+  },
+
+  "zap": {
+    "level": "",
+    "path": ""
+  }
+}
