@@ -12,6 +12,7 @@ type DatabaseConfig struct {
 	DBName     string `json:"dbName"`
 	DBPassword string `json:"dbPassword"`
 	SSLMode    string `json:"sslMode"`
+	User       string `json:"user"`
 }
 
 type Config struct {

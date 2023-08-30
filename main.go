@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/Dontpingforgank/AuthenticationService/Config"
+	"github.com/Dontpingforgank/AuthenticationService/Database"
 	"github.com/Dontpingforgank/AuthenticationService/Logger"
 	"go.uber.org/zap"
 )
@@ -20,4 +21,11 @@ func main() {
 	}
 
 	appLogger.Log(zap.InfoLevel, "Logger initialized")
+
+	shit, dbConnectionErr := Database.NewDbConnectionFactory(appConfiguration, loggerFactory).NewDbConnection()
+	if dbConnectionErr != nil {
+		panic(dbConnectionErr)
+	}
+
+	defer shit.Close()
 }
