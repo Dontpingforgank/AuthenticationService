@@ -4,7 +4,8 @@
     "port": "",
     "dbName": "",
     "dbPassword": "",
-    "sslMode": ""
+    "sslMode": "",
+    "user": ""
   },
 
   "zap": {
