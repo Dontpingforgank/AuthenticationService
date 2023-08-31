@@ -63,14 +63,9 @@ func (authService authenticationService) Run() {
 		panic(err)
 	}
 
-	server := &http.Server{
-		Addr:    fmt.Sprintf(":%d", authService.configuration.Port),
-		Handler: router,
-	}
-
-	errListening := server.ListenAndServe()
+	err = router.Run(fmt.Sprintf("localhost:%s", authService.configuration.Port))
 	if err != nil {
-		panic(errListening)
+		panic(err)
 	}
 }
 
