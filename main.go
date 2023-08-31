@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/Dontpingforgank/AuthenticationService/Config"
+	"github.com/Dontpingforgank/AuthenticationService/Controllers"
 	"github.com/Dontpingforgank/AuthenticationService/Database"
 	"github.com/Dontpingforgank/AuthenticationService/Logger"
 	"github.com/Dontpingforgank/AuthenticationService/Service"
@@ -25,7 +26,8 @@ func main() {
 
 	dbConnectionFactory := Database.NewDbConnectionFactory(appConfiguration, loggerFactory)
 
-	service := Service.NewAuthenticationService(appConfiguration, loggerFactory, dbConnectionFactory)
+	service := Service.NewAuthenticationService(appConfiguration, loggerFactory, dbConnectionFactory,
+		Controllers.NewTestController(appConfiguration, loggerFactory, dbConnectionFactory))
 
 	service.Run()
 }
