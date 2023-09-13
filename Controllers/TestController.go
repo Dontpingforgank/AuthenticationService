@@ -1,20 +1,20 @@
 package Controllers
 
 import (
-	"github.com/Dontpingforgank/AuthenticationService/Config"
 	"github.com/Dontpingforgank/AuthenticationService/Database"
 	"github.com/Dontpingforgank/AuthenticationService/Logger"
+	"github.com/Dontpingforgank/AuthenticationService/Models"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
 
 type testController struct {
-	config        *Config.Config
+	config        *Models.Config
 	loggerFactory Logger.LoggerFactory
 	dbFactory     Database.DatabaseFactory
 }
 
-func NewTestController(config *Config.Config, loggerFactory Logger.LoggerFactory, dbFactory Database.DatabaseFactory) Controller {
+func NewTestController(config *Models.Config, loggerFactory Logger.LoggerFactory, dbFactory Database.DatabaseFactory) Controller {
 	return &testController{
 		config:        config,
 		loggerFactory: loggerFactory,

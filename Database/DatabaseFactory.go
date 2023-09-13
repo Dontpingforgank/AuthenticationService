@@ -3,8 +3,8 @@ package Database
 import (
 	"database/sql"
 	"fmt"
-	"github.com/Dontpingforgank/AuthenticationService/Config"
 	"github.com/Dontpingforgank/AuthenticationService/Logger"
+	"github.com/Dontpingforgank/AuthenticationService/Models"
 	_ "github.com/lib/pq"
 	"go.uber.org/zap"
 	"time"
@@ -15,11 +15,11 @@ type DatabaseFactory interface {
 }
 
 type databaseFactory struct {
-	config        *Config.Config
+	config        *Models.Config
 	loggerFactory Logger.LoggerFactory
 }
 
-func NewDbConnectionFactory(conf *Config.Config, loggerFactory Logger.LoggerFactory) DatabaseFactory {
+func NewDbConnectionFactory(conf *Models.Config, loggerFactory Logger.LoggerFactory) DatabaseFactory {
 	return &databaseFactory{
 		config:        conf,
 		loggerFactory: loggerFactory,
@@ -58,7 +58,7 @@ func (dbFactory databaseFactory) NewDbConnection() (*sql.DB, error) {
 	return dbConnection, nil
 }
 
-func buildDbConnectionString(config *Config.DatabaseConfig) string {
+func buildDbConnectionString(config *Models.DatabaseConfig) string {
 	dbConnectionString := fmt.Sprintf("host=%s port=%s user=%s dbname =%s password=%s sslmode=%s",
 		config.Host, config.Port, config.User, config.DBName, config.DBPassword, config.SSLMode)
 

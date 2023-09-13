@@ -3,10 +3,10 @@ package Service
 import (
 	"database/sql"
 	"fmt"
-	"github.com/Dontpingforgank/AuthenticationService/Config"
 	"github.com/Dontpingforgank/AuthenticationService/Controllers"
 	"github.com/Dontpingforgank/AuthenticationService/Database"
 	"github.com/Dontpingforgank/AuthenticationService/Logger"
+	"github.com/Dontpingforgank/AuthenticationService/Models"
 	ginzap "github.com/gin-contrib/zap"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -19,13 +19,13 @@ type Service interface {
 }
 
 type authenticationService struct {
-	configuration       *Config.Config
+	configuration       *Models.Config
 	loggerFactory       Logger.LoggerFactory
 	dbConnectionFactory Database.DatabaseFactory
 	controllers         []Controllers.Controller
 }
 
-func NewAuthenticationService(config *Config.Config, loggerFactory Logger.LoggerFactory, dbConnectionFactory Database.DatabaseFactory,
+func NewAuthenticationService(config *Models.Config, loggerFactory Logger.LoggerFactory, dbConnectionFactory Database.DatabaseFactory,
 	controller ...Controllers.Controller) Service {
 	return &authenticationService{
 		configuration:       config,

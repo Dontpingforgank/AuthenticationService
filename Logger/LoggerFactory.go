@@ -2,7 +2,7 @@ package Logger
 
 import (
 	"fmt"
-	"github.com/Dontpingforgank/AuthenticationService/Config"
+	"github.com/Dontpingforgank/AuthenticationService/Models"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"os"
@@ -15,7 +15,7 @@ type LoggerFactory interface {
 }
 
 type loggerFactory struct {
-	configuration *Config.Config
+	configuration *Models.Config
 }
 
 func (logFactory loggerFactory) NewLogger() (*zap.Logger, func(), error) {
@@ -53,7 +53,7 @@ func (logFactory loggerFactory) NewLogger() (*zap.Logger, func(), error) {
 	return log, c, nil
 }
 
-func NewLoggerFactory(configuration *Config.Config) LoggerFactory {
+func NewLoggerFactory(configuration *Models.Config) LoggerFactory {
 	return &loggerFactory{
 		configuration: configuration,
 	}
