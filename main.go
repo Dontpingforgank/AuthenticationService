@@ -27,7 +27,8 @@ func main() {
 	dbConnectionFactory := Database.NewDbConnectionFactory(appConfiguration, loggerFactory)
 
 	service := Service.NewAuthenticationService(appConfiguration, loggerFactory, dbConnectionFactory,
-		Controllers.NewTestController(appConfiguration, loggerFactory, dbConnectionFactory))
+		Controllers.NewTestController(appConfiguration, loggerFactory, dbConnectionFactory),
+		Controllers.NewRegisterController(appConfiguration, loggerFactory, dbConnectionFactory))
 
 	service.Run()
 }

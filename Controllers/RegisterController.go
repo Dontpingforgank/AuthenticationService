@@ -2,12 +2,16 @@ package Controllers
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"github.com/Dontpingforgank/AuthenticationService/Database"
 	"github.com/Dontpingforgank/AuthenticationService/Logger"
 	"github.com/Dontpingforgank/AuthenticationService/Models"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
+	"golang.org/x/crypto/bcrypt"
 	"net/http"
+	"unicode"
 )
 
 type registerController struct {
@@ -25,6 +29,13 @@ func NewRegisterController(config *Models.Config, loggerFactory Logger.LoggerFac
 }
 
 func (ctr registerController) Handle() gin.HandlerFunc {
+	logger, closeLog, logErr := ctr.loggerFactory.NewLogger()
+	if logErr != nil {
+		panic(logErr)
+	}
+
+	defer closeLog()
+
 	return func(ctx *gin.Context) {
 		// parse user registration info
 		userRegisterInfo, userInfoParseError := getRegistrationInfo(ctx)
@@ -39,7 +50,11 @@ func (ctr registerController) Handle() gin.HandlerFunc {
 			_ = connection.Close()
 		}(connection)
 
-		insertUserInDb(userRegisterInfo, connection)
+		_, err := insertUserInDb(userRegisterInfo, connection)
+		if err != nil {
+			logger.Log(zap.ErrorLevel, "couldn't register user", zap.String("err", err.Error()))
+		}
+
 	}
 }
 
@@ -84,31 +99,100 @@ func establishDbConnection(ctr registerController, ctx *gin.Context) *sql.DB {
 }
 
 func insertUserInDb(userRegisterInfo *Models.UserRegisterModel, connection *sql.DB) (bool, error) {
-	taken, err := checkIfEmailIsTaken(userRegisterInfo.Email, connection)
-	if err != nil {
-		return false, err
-	}
 
-	// Need to handle the outcome of checkIfEmailIsTakenFunction
+	if verifyUserData(userRegisterInfo) {
+		taken, err := checkIfEmailIsTaken(userRegisterInfo.Email, connection)
 
-	return taken, nil
-}
+		if err != nil {
+			return false, err
+		}
 
-func checkIfEmailIsTaken(email string, connection *sql.DB) (bool, error) {
-	querry := fmt.Sprintf("select id from user_table where email = '%s'", email)
+		if taken {
+			return false, errors.New(fmt.Sprintf("user with the email %s is already registered", userRegisterInfo.Email))
+		}
 
-	var count int
+		generatedPass, generatePassError := generateHashedPassword(userRegisterInfo.Password)
+		if generatePassError != nil {
+			return false, nil
+		}
 
-	err := connection.QueryRow(querry).Scan(&count)
-	if err != nil {
-		return false, err
-	}
+		query, prepareError := connection.Prepare("insert into user_table(name, city, country, password, email) values ($1, $2, $3, $4, $5)")
+		if prepareError != nil {
+			return false, prepareError
+		}
 
-	if count > 0 {
-		return false, nil
-	} else {
+		_, insertUserError := query.Exec(userRegisterInfo.Name, userRegisterInfo.City, userRegisterInfo.Country, generatedPass, userRegisterInfo.Email)
+		if insertUserError != nil {
+			return false, insertUserError
+		}
+
 		return true, nil
 	}
 
 	return false, nil
+}
+
+func checkIfEmailIsTaken(email string, connection *sql.DB) (bool, error) {
+	query := fmt.Sprintf("select id from user_table where email = '%s'", email)
+
+	var count int
+
+	err := connection.QueryRow(query).Scan(&count)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return false, err
+	}
+
+	if count > 0 {
+		return true, nil
+	} else {
+		return false, nil
+	}
+}
+
+func generateHashedPassword(password string) (string, error) {
+	hashedPass, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return "", err
+	}
+	return string(hashedPass), nil
+}
+
+func verifyUserData(userModel *Models.UserRegisterModel) bool {
+	if verifyPassword(userModel.Password) &&
+		len(userModel.Email) > 0 &&
+		len(userModel.Name) > 0 &&
+		len(userModel.Country) > 0 &&
+		len(userModel.City) > 0 {
+		return true
+	}
+
+	return false
+}
+
+func verifyPassword(password string) bool {
+	if len(password) >= 6 {
+		var upper bool
+		var lower bool
+		var number bool
+
+		for _, char := range password {
+			if unicode.IsLower(char) {
+				lower = true
+				continue
+			}
+
+			if unicode.IsUpper(char) {
+				upper = true
+				continue
+			}
+
+			if unicode.IsNumber(char) {
+				number = true
+			}
+		}
+
+		return lower && upper && number
+	}
+
+	return false
 }
