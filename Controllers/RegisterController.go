@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/Dontpingforgank/AuthenticationService/CustomErrors"
 	"github.com/Dontpingforgank/AuthenticationService/Database"
 	"github.com/Dontpingforgank/AuthenticationService/Logger"
 	"github.com/Dontpingforgank/AuthenticationService/Models"
@@ -37,7 +38,6 @@ func (ctr registerController) Handle() gin.HandlerFunc {
 	defer closeLog()
 
 	return func(ctx *gin.Context) {
-		// parse user registration info
 		userRegisterInfo, userInfoParseError := getRegistrationInfo(ctx)
 
 		if userInfoParseError != nil {
@@ -51,10 +51,18 @@ func (ctr registerController) Handle() gin.HandlerFunc {
 		}(connection)
 
 		_, err := insertUserInDb(userRegisterInfo, connection)
-		if err != nil {
+		switch {
+		case errors.Is(err, CustomErrors.UserTakenError{}):
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"Message": fmt.Sprintf("%s %s", err.Error(), userRegisterInfo.Email),
+			})
+		case errors.Is(err, CustomErrors.InsecurePassword{}):
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"Message": fmt.Sprintf("%s", err.Error()),
+			})
+		case err != nil:
 			logger.Log(zap.ErrorLevel, "couldn't register user", zap.String("err", err.Error()))
 		}
-
 	}
 }
 
@@ -99,8 +107,12 @@ func establishDbConnection(ctr registerController, ctx *gin.Context) *sql.DB {
 }
 
 func insertUserInDb(userRegisterInfo *Models.UserRegisterModel, connection *sql.DB) (bool, error) {
+	verified, verifiedErr := verifyUserData(userRegisterInfo)
+	if verifiedErr != nil {
+		return false, verifiedErr
+	}
 
-	if verifyUserData(userRegisterInfo) {
+	if verified {
 		taken, err := checkIfEmailIsTaken(userRegisterInfo.Email, connection)
 
 		if err != nil {
@@ -108,7 +120,7 @@ func insertUserInDb(userRegisterInfo *Models.UserRegisterModel, connection *sql.
 		}
 
 		if taken {
-			return false, fmt.Errorf("user with the email %s is already registered", userRegisterInfo.Email)
+			return false, CustomErrors.UserTakenError{}
 		}
 
 		generatedPass, generatePassError := generateHashedPassword(userRegisterInfo.Password)
@@ -157,19 +169,24 @@ func generateHashedPassword(password string) (string, error) {
 	return string(hashedPass), nil
 }
 
-func verifyUserData(userModel *Models.UserRegisterModel) bool {
-	if verifyPassword(userModel.Password) &&
+func verifyUserData(userModel *Models.UserRegisterModel) (bool, error) {
+	verified, passErr := verifyPassword(userModel.Password)
+	if passErr != nil {
+		return false, passErr
+	}
+
+	if verified &&
 		len(userModel.Email) > 0 &&
 		len(userModel.Name) > 0 &&
 		len(userModel.Country) > 0 &&
 		len(userModel.City) > 0 {
-		return true
+		return true, nil
 	}
 
-	return false
+	return false, nil
 }
 
-func verifyPassword(password string) bool {
+func verifyPassword(password string) (bool, error) {
 	if len(password) >= 6 {
 		var upper bool
 		var lower bool
@@ -191,8 +208,12 @@ func verifyPassword(password string) bool {
 			}
 		}
 
-		return lower && upper && number
+		if upper && lower && number {
+			return true, nil
+		} else {
+			return false, CustomErrors.InsecurePassword{}
+		}
 	}
 
-	return false
+	return false, nil
 }
