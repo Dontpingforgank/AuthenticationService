@@ -108,7 +108,7 @@ func insertUserInDb(userRegisterInfo *Models.UserRegisterModel, connection *sql.
 		}
 
 		if taken {
-			return false, errors.New(fmt.Sprintf("user with the email %s is already registered", userRegisterInfo.Email))
+			return false, fmt.Errorf("user with the email %s is already registered", userRegisterInfo.Email)
 		}
 
 		generatedPass, generatePassError := generateHashedPassword(userRegisterInfo.Password)
