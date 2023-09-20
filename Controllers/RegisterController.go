@@ -8,11 +8,12 @@ import (
 	"github.com/Dontpingforgank/AuthenticationService/Database"
 	"github.com/Dontpingforgank/AuthenticationService/Logger"
 	"github.com/Dontpingforgank/AuthenticationService/Models"
+	"github.com/Dontpingforgank/AuthenticationService/Utils/DbConnectionUtils"
+	"github.com/Dontpingforgank/AuthenticationService/Utils/PasswordUtils"
+	"github.com/Dontpingforgank/AuthenticationService/Utils/UserUtils"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
-	"golang.org/x/crypto/bcrypt"
 	"net/http"
-	"unicode"
 )
 
 type registerController struct {
@@ -44,7 +45,11 @@ func (ctr registerController) Handle() gin.HandlerFunc {
 			returnJsonError(ctx, "error parsing user registration info")
 		}
 
-		connection := establishDbConnection(ctr, ctx)
+		connection, connectionError := DbConnectionUtils.EstablishDbConnection(ctr.dbFactory)
+
+		if connectionError != nil {
+			logger.Error("Couldn't establish db connection", zap.String("err", connectionError.Error()))
+		}
 
 		defer func(connection *sql.DB) {
 			_ = connection.Close()
@@ -90,40 +95,24 @@ func returnJsonError(ctx *gin.Context, message string) {
 	})
 }
 
-func establishDbConnection(ctr registerController, ctx *gin.Context) *sql.DB {
-	connection, err := ctr.dbFactory.NewDbConnection()
-	if err != nil {
-		returnJsonError(ctx, "Couldn't establish db connection")
-		return nil
-	}
-
-	err = connection.Ping()
-	if err != nil {
-		returnJsonError(ctx, "Db is not in reach")
-		return nil
-	}
-
-	return connection
-}
-
 func insertUserInDb(userRegisterInfo *Models.UserRegisterModel, connection *sql.DB) (bool, error) {
-	verified, verifiedErr := verifyUserData(userRegisterInfo)
+	verified, verifiedErr := UserUtils.VerifyUserData(userRegisterInfo)
 	if verifiedErr != nil {
 		return false, verifiedErr
 	}
 
 	if verified {
-		taken, err := checkIfEmailIsTaken(userRegisterInfo.Email, connection)
+		id, err := DbConnectionUtils.CheckIfEmailIsTaken(userRegisterInfo.Email, connection)
 
 		if err != nil {
 			return false, err
 		}
 
-		if taken {
+		if id > 0 {
 			return false, CustomErrors.UserTakenError{}
 		}
 
-		generatedPass, generatePassError := generateHashedPassword(userRegisterInfo.Password)
+		generatedPass, generatePassError := PasswordUtils.GenerateHashedPassword(userRegisterInfo.Password)
 		if generatePassError != nil {
 			return false, nil
 		}
@@ -139,80 +128,6 @@ func insertUserInDb(userRegisterInfo *Models.UserRegisterModel, connection *sql.
 		}
 
 		return true, nil
-	}
-
-	return false, nil
-}
-
-func checkIfEmailIsTaken(email string, connection *sql.DB) (bool, error) {
-	query := fmt.Sprintf("select id from user_table where email = '%s'", email)
-
-	var count int
-
-	err := connection.QueryRow(query).Scan(&count)
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		return false, err
-	}
-
-	if count > 0 {
-		return true, nil
-	} else {
-		return false, nil
-	}
-}
-
-func generateHashedPassword(password string) (string, error) {
-	hashedPass, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		return "", err
-	}
-	return string(hashedPass), nil
-}
-
-func verifyUserData(userModel *Models.UserRegisterModel) (bool, error) {
-	verified, passErr := verifyPassword(userModel.Password)
-	if passErr != nil {
-		return false, passErr
-	}
-
-	if verified &&
-		len(userModel.Email) > 0 &&
-		len(userModel.Name) > 0 &&
-		len(userModel.Country) > 0 &&
-		len(userModel.City) > 0 {
-		return true, nil
-	}
-
-	return false, nil
-}
-
-func verifyPassword(password string) (bool, error) {
-	if len(password) >= 6 {
-		var upper bool
-		var lower bool
-		var number bool
-
-		for _, char := range password {
-			if unicode.IsLower(char) {
-				lower = true
-				continue
-			}
-
-			if unicode.IsUpper(char) {
-				upper = true
-				continue
-			}
-
-			if unicode.IsNumber(char) {
-				number = true
-			}
-		}
-
-		if upper && lower && number {
-			return true, nil
-		} else {
-			return false, CustomErrors.InsecurePassword{}
-		}
 	}
 
 	return false, nil
