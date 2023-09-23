@@ -84,7 +84,7 @@ func (ctr LogInController) Handle() gin.HandlerFunc {
 					"Message": "Couldn't generate token",
 				})
 			} else {
-				context.SetCookie("authorization", jwtToken, 0, "", "", false, true)
+				context.SetCookie("Authorization", jwtToken, 3600*24*14, "", "", false, true)
 				context.JSON(http.StatusOK, gin.H{
 					"Success": true,
 					"Message": fmt.Sprintf("Welcome back %s", credentials.Email),

@@ -11,7 +11,7 @@ func GenerateJwtToken(key string, claimsModel Models.UserClaimsModel) (string, e
 	if key != "" && claimsModel.Id > 0 {
 		token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 			"id":  claimsModel.Id,
-			"epx": time.Now().Add(time.Hour * 24 * 16).Unix(),
+			"exp": time.Now().Add(time.Hour * 24 * 16).Unix(),
 		})
 
 		tokenString, err := token.SignedString([]byte(key))
