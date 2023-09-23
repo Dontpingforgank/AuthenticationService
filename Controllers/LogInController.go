@@ -7,6 +7,7 @@ import (
 	"github.com/Dontpingforgank/AuthenticationService/Logger"
 	"github.com/Dontpingforgank/AuthenticationService/Models"
 	"github.com/Dontpingforgank/AuthenticationService/Utils/DbConnectionUtils"
+	"github.com/Dontpingforgank/AuthenticationService/Utils/SessionUtils"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
@@ -77,9 +78,19 @@ func (ctr LogInController) Handle() gin.HandlerFunc {
 				"Message": "password do not match",
 			})
 		} else {
-			context.JSON(http.StatusOK, gin.H{
-				"Message": fmt.Sprintf("Welcome back %s", credentials.Email),
-			})
+			jwtToken, tokenError := SessionUtils.GenerateJwtToken(ctr.config.JwtSecret, Models.UserClaimsModel{Id: userId})
+			if tokenError != nil {
+				context.JSON(http.StatusBadRequest, gin.H{
+					"Message": "Couldn't generate token",
+				})
+			} else {
+				context.SetCookie("authorization", jwtToken, 0, "", "", false, true)
+				context.JSON(http.StatusOK, gin.H{
+					"Success": true,
+					"Message": fmt.Sprintf("Welcome back %s", credentials.Email),
+					"Token":   jwtToken,
+				})
+			}
 		}
 	}
 }

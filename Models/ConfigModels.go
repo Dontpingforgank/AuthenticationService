@@ -12,9 +12,10 @@ type DatabaseConfig struct {
 }
 
 type Config struct {
-	Database DatabaseConfig `json:"database"`
-	Zap      ZapConfig      `json:"zap"`
-	Port     string         `json:"port"`
+	Database  DatabaseConfig `json:"database"`
+	Zap       ZapConfig      `json:"zap"`
+	Port      string         `json:"port"`
+	JwtSecret string         `json:"jwtSecret"`
 }
 
 type ZapConfig struct {
