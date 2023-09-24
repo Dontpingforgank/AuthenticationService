@@ -38,7 +38,10 @@ func (ctr AuthenticationController) Handle() gin.HandlerFunc {
 		if tokenHeader != "" {
 			token, err := jwt.ParseWithClaims(tokenHeader, &Models.UserClaimsModel{}, func(tkn *jwt.Token) (interface{}, error) {
 				if _, ok := tkn.Method.(*jwt.SigningMethodHMAC); !ok {
-					context.AbortWithStatus(http.StatusUnauthorized)
+					context.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+						"Success": false,
+						"Message": "Token Invalid",
+					})
 				}
 				return []byte(ctr.configs.JwtSecret), nil
 			})

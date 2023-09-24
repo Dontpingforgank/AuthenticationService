@@ -91,7 +91,8 @@ func getRegistrationInfo(ctx *gin.Context) (*Models.UserRegisterModel, error) {
 
 func returnJsonError(ctx *gin.Context, message string) {
 	ctx.JSON(http.StatusBadRequest, gin.H{
-		"Error": message,
+		"Success": false,
+		"Error":   message,
 	})
 }
 

@@ -42,6 +42,7 @@ func (ctr LogInController) Handle() gin.HandlerFunc {
 		err := context.Bind(&credentials)
 		if err != nil {
 			context.JSON(http.StatusBadRequest, gin.H{
+				"Success": false,
 				"Message": "Incorrect request body",
 			})
 		}
@@ -63,6 +64,7 @@ func (ctr LogInController) Handle() gin.HandlerFunc {
 
 		if userId <= 0 {
 			context.JSON(http.StatusBadRequest, gin.H{
+				"Success": false,
 				"Message": fmt.Sprintf("user with given email is not registered. Email: %s", credentials.Email),
 			})
 		}
@@ -75,12 +77,14 @@ func (ctr LogInController) Handle() gin.HandlerFunc {
 		compareErr := bcrypt.CompareHashAndPassword([]byte(userRealPassword), []byte(credentials.Password))
 		if compareErr != nil {
 			context.JSON(http.StatusUnauthorized, gin.H{
+				"Success": false,
 				"Message": "password do not match",
 			})
 		} else {
 			jwtToken, tokenError := SessionUtils.GenerateJwtToken(ctr.config.JwtSecret, Models.UserClaimsModel{Id: userId})
 			if tokenError != nil {
 				context.JSON(http.StatusBadRequest, gin.H{
+					"Success": false,
 					"Message": "Couldn't generate token",
 				})
 			} else {
