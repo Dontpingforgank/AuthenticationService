@@ -14,5 +14,6 @@
   },
   "port": "",
   "jwtSecret": "",
-  "ipAddress": ""
+  "ipAddress": "",
+  "mod": ""
 }

@@ -70,6 +70,8 @@ func (authService authenticationService) Run() {
 }
 
 func (authService authenticationService) buildRouter(appLogger *zap.Logger) (*gin.Engine, error) {
+	gin.SetMode(authService.configuration.Mode)
+
 	router := gin.Default()
 
 	router.Use(ginzap.Ginzap(appLogger, time.RFC3339, true))
