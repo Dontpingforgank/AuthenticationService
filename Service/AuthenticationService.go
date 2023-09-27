@@ -63,7 +63,7 @@ func (authService authenticationService) Run() {
 		panic(err)
 	}
 
-	logger.Info(fmt.Sprintf("Listening to %s:%s", authService.configuration.IpAddress, authService.configuration.Port))
+	logger.Log(zap.ErrorLevel, fmt.Sprintf("Listening to %s:%s", authService.configuration.IpAddress, authService.configuration.Port))
 	err = router.Run(fmt.Sprintf("%s:%s", authService.configuration.IpAddress, authService.configuration.Port))
 	if err != nil {
 		panic(err)
