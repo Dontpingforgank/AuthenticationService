@@ -16,6 +16,7 @@ type Config struct {
 	Zap       ZapConfig      `json:"zap"`
 	Port      string         `json:"port"`
 	JwtSecret string         `json:"jwtSecret"`
+	IpAddress string         `json:"ipAddress"`
 }
 
 type ZapConfig struct {

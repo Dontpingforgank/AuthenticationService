@@ -11,5 +11,8 @@
   "zap": {
     "level": "",
     "path": ""
-  }
+  },
+  "port": "",
+  "jwtSecret": "",
+  "ipAddress": ""
 }
