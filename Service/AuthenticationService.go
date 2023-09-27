@@ -63,7 +63,7 @@ func (authService authenticationService) Run() {
 		panic(err)
 	}
 
-	err = router.Run(fmt.Sprintf("%s:%s", authService.configuration.IpAddress, authService.configuration.Port))
+	err = router.Run(fmt.Sprintf("0.0.0.0:%s", authService.configuration.Port))
 	if err != nil {
 		panic(err)
 	}
