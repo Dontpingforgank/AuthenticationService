@@ -11,4 +11,4 @@ RUN mkdir ../logs
 WORKDIR "$APP_HOME"
 
 EXPOSE 8000
-CMD ["bee", "run"]
+CMD ["bee", "run", "-buildvcs=false"]
